@@ -8,7 +8,7 @@
 	  Status		->	Fully functional, but some functions are missing (like group function)
    Documentation:
 	  Telegram API	->	https://core.telegram.org/bots/api
-	  GitHub Page	->	https://github.com/xLinkOut/telegram-udf-autoit/ <<<<<<<<<<<<<<<<<<<<<<<
+	  GitHub Page	->	https://github.com/xLinkOut/telegram-udf-php
    Author Information:
 	  GitHub	->	https://github.com/xLinkOut
 	  Telegram	->	https://t.me/LinkOut
