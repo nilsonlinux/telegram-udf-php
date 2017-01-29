@@ -92,16 +92,16 @@ function _GetMe(){
 						$DisableNotification: True/False (optional) - Send message silently
    Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
   =============================================================================== */
-function _SendMsg($ChatID,$Text,$ParseMode = '',$KeyboardMarkup = 'default',$ResizeKeyboard = false, $OneTimeKeyboard = false, $DisableWebPreview = false, $DisableNotification = false){
+function _SendMsg($ChatID,$Text,$DisableNotification = false,$ParseMode = '',$KeyboardMarkup = 'default',$ResizeKeyboard = false, $OneTimeKeyboard = false, $DisableWebPreview = false){
 	global $API_URL;
 	$query = $API_URL . "/sendMessage?chat_id=" . $ChatID . "&text=" . $Text;
+	if($DisableNotification == true){$query &= "&disable_notification=True";}
 	if($ParseMode == "Markdown"){$query &= "&parse_mode=markdown";}
 	if($ParseMode == "HTML"){$query &= "&parse_mode=html";}
 	if($KeyboardMarkup != 'default'){$query &= "&reply_markup=" . $KeyboardMarkup;}
 	if($ResizeKeyboard == true){$query &= "&resize_keyboard=True";}
     if($OneTimeKeyboard == true){$query &= "&one_time_keyboard=True";}
     if($DisableWebPreview == true){$query &= "&disable_web_page_preview=True";}
-    if($DisableNotification == true){$query &= "&disable_notification=True";}
 	$response = file_get_contents($query);
 	return true;
 }
@@ -129,10 +129,10 @@ function _ForwardMsg($ChatID, $OriginalChatID, $MsgID){
 						$Caption: Caption to send with photo (optional)
    Return Value(s):  	Return File ID of the photo as string
   =============================================================================== */
-function _SendPhoto($ChatID,$Path,$Caption = ''){
+function _SendPhoto($ChatID,$Path,$Caption = '',$DisableNotification = false){
 	global $API_URL;
-	$query = $API_URL . "/sendPhoto?chat_id=" . $ChatID;
-	$post_fields = array('chat_id' => $ChatID,'photo' => new CURLFile(realpath($Path)),'caption' => $Caption);
+	$query = $API_URL . "/sendPhoto";
+	$post_fields = array('chat_id' => $ChatID,'photo' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
@@ -150,10 +150,10 @@ function _SendPhoto($ChatID,$Path,$Caption = ''){
 						$Caption: Caption to send with audio (optional)
    Return Value(s):  	Return File ID of the audio as string
   =============================================================================== */
-function _SendAudio($ChatID,$Path,$Caption = ''){
+function _SendAudio($ChatID,$Path,$Caption = '',$DisableNotification = false){
 	global $API_URL;
-	$query = $API_URL . "/sendAudio?chat_id=" . $ChatID;
-	$post_fields = array('chat_id' => $ChatID,'audio' => new CURLFile(realpath($Path)),'caption' => $Caption);
+	$query = $API_URL . "/sendAudio";
+	$post_fields = array('chat_id' => $ChatID,'audio' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
@@ -171,10 +171,10 @@ function _SendAudio($ChatID,$Path,$Caption = ''){
 						$Caption: Caption to send with video (optional)
    Return Value(s):  	Return File ID of the video as string
   =============================================================================== */
-function _SendVideo($ChatID,$Path,$Caption = ''){
+function _SendVideo($ChatID,$Path,$Caption = '',$DisableNotification = false){
 	global $API_URL;
-	$query = $API_URL . "/sendVideo?chat_id=" . $ChatID;
-	$post_fields = array('chat_id' => $ChatID,'video' => new CURLFile(realpath($Path)),'caption' => $Caption);
+	$query = $API_URL . "/sendVideo";
+	$post_fields = array('chat_id' => $ChatID,'video' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
@@ -192,10 +192,10 @@ function _SendVideo($ChatID,$Path,$Caption = ''){
 						$Caption: Caption to send with document (optional)
    Return Value(s):  	Return File ID of the video as string
   =============================================================================== */
-function _SendDocument($ChatID,$Path,$Caption = ''){
+function _SendDocument($ChatID,$Path,$Caption = '',$DisableNotification = false){
 	global $API_URL;
-	$query = $API_URL . "/sendDocument?chat_id=" . $ChatID;
-	$post_fields = array('chat_id' => $ChatID,'document' => new CURLFile(realpath($Path)),'caption' => $Caption);
+	$query = $API_URL . "/sendDocument";
+	$post_fields = array('chat_id' => $ChatID,'document' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
@@ -213,10 +213,10 @@ function _SendDocument($ChatID,$Path,$Caption = ''){
 						$Caption: Caption to send with voice (optional)
    Return Value(s):  	Return File ID of the video as string
   =============================================================================== */
-function _SendVoice($ChatID,$Path,$Caption = ''){
+function _SendVoice($ChatID,$Path,$Caption = '',$DisableNotification = false){
 	global $API_URL;
-	$query = $API_URL . "/sendVoice?chat_id=" . $ChatID;
-	$post_fields = array('chat_id' => $ChatID,'voice' => new CURLFile(realpath($Path)),'caption' => $Caption);
+	$query = $API_URL . "/sendVoice";
+	$post_fields = array('chat_id' => $ChatID,'voice' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
@@ -233,10 +233,10 @@ function _SendVoice($ChatID,$Path,$Caption = ''){
 						$Path: Path to local file (format: .webp)
    Return Value(s):  	Return File ID of the video as string
   =============================================================================== */
-function _SendSticker($ChatID,$Path){
+function _SendSticker($ChatID,$Path,$DisableNotification = false){
 	global $API_URL;
-	$query = $API_URL . "/sendSticker?chat_id=" . $ChatID;
-	$post_fields = array('chat_id' => $ChatID,'sticker' => new CURLFile(realpath($Path)));
+	$query = $API_URL . "/sendSticker";
+	$post_fields = array('chat_id' => $ChatID,'sticker' => new CURLFile(realpath($Path)),'disable_notification' => $DisableNotification);
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
@@ -268,9 +268,10 @@ function _SendChatAction($ChatID,$Action){
 						$Longitude: Longitude of location
    Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
   =============================================================================== */
-function _SendLocation($ChatID,$Latitude,$Longitude){
+function _SendLocation($ChatID,$Latitude,$Longitude,$DisableNotification = false){
 	global $API_URL;
 	$query = $API_URL . "/sendLocation?chat_id=" . $ChatID . "&latitude=" . $Latitude . "&longitude=" . $Longitude;
+	if($DisableNotification == true){$query &= "&disable_notification=True";}
 	$response = file_get_contents($query);
 	return true;
 }
@@ -283,9 +284,10 @@ function _SendLocation($ChatID,$Latitude,$Longitude){
 						$Name: Name of the contact
    Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
   =============================================================================== */
-function _SendContact($ChatID,$Phone,$Name){
+function _SendContact($ChatID,$Phone,$Name,$DisableNotification = false){
 	global $API_URL;
 	$query = $API_URL . "/sendContact?chat_id=" . $ChatID . "&phone_number=" . $Phone . "&first_name=" . $Name;
+	if($DisableNotification == true){$query &= "&disable_notification=True";}
 	$response = file_get_contents($query);
 	return true;
 }
@@ -293,15 +295,15 @@ function _SendContact($ChatID,$Phone,$Name){
 /* ===============================================================================
    Function Name..:		_GetUserProfilePhotos()
    Description....:     Get all the profile pictures of an user
-   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+   Parameter(s)...:     $UserID: Unique identifier for the target chat
 						$Offset (optional): offset to use if you want to get a specific photo
    Return Value(s):  	Return an array with count and fileIDs of the photos
 							$photos_file_id[0] = Integer, photo's count
 							$photos_file_id[1,2...] = FileID of the profile picture (use _DownloadFile to download file)
   =============================================================================== */
-function _GetUserProfilePhotos($ChatID,$offs = ''){
+function _GetUserProfilePhotos($UserID,$offs = ''){
 	global $API_URL;
-	$query = $API_URL . "/getUserProfilePhotos?user_id=" . $ChatID;
+	$query = $API_URL . "/getUserProfilePhotos?user_id=" . $UserID;
 	if($offs != ''){$query = $query . "&offset=" . $offs;}
 	$response = file_get_contents($query);
 	$json = json_decode($response);
@@ -324,6 +326,137 @@ function _GetChat($ChatID){
 	$query = $API_URL . "/getChat?chat_id=" . $ChatID;
 	return file_get_contents($query);
 }
+
+/* ===============================================================================
+   Function Name..:		_GetChatAdmins()
+   Description....:     Get information about chat administrator
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+   Return Value(s):  	Return array with ID, First name and Username of all chat admin
+  =============================================================================== */
+function _GetChatAdmins($ChatID){
+	global $API_URL;
+	$query = $API_URL. "/getChatAdministrators?chat_id=" . $ChatID;
+	$json = file_get_contents($query);
+	$response = json_decode($json);
+	$update = $response->result;
+	$counter = 0;
+	$msgData = array();
+	while(isset($update[$counter]->user)){
+		$user = array('id' => $update[$counter]->user->id,
+					  'first_name' => $update[$counter]->user->first_name,
+					  'username' => $update[$counter]->user->username);
+		array_push($msgData,$user);
+		$counter++;
+	}
+	return $msgData;
+}
+
+/* ===============================================================================
+   Function Name..:		_GetChatMembersCount()
+   Description....:     Get number of chat members
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+   Return Value(s):  	Return an integer
+  =============================================================================== */
+function _GetChatMembersCount($ChatID){
+	global $API_URL;
+	$query = $API_URL. "/getChatMembersCount?chat_id=" . $ChatID;
+	$json = file_get_contents($query);
+	$response = json_decode($json);
+	$count = $response->result;
+	return $count;
+}
+
+/* ===============================================================================
+   Function Name..:		_GetChatMember()
+   Description....:     Get information about a specific user
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+						$UserID: Unique identifier for the target user
+   Return Value(s):  	Return an array with ID,First name and Username
+  =============================================================================== */
+function _GetChatMember($ChatID, $UserID){
+	global $API_URL;
+	$query = $API_URL . "/getChatMember?chat_id=" . $ChatID . "&user_id=" . $UserID;
+	$json = file_get_contents($query);
+	$response = json_decode($json);
+	$user = $response->result->user;
+	$msgData = array('id' => $user->id,
+					 'first_name' => $user->first_name,
+					  'username' => $user->username);
+	return($msgData);
+}
+
+/* ===============================================================================
+   Function Name..:		_LeaveChat()
+   Description....:     Leave the current chat
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+   Return Value(s):  	Return true if success, false otherwise
+  =============================================================================== */
+function _LeaveChat($ChatID){
+	global $API_URL;
+	$query = $API_URL . "/leaveChat?chat_id=" . $ChatID;
+	$json = file_get_contents($query);
+	$response = json_decode($json);
+	if($response->result == 1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* ===============================================================================
+   Function Name..:		_KickChatMember()
+   Description....:     Kick an user from a Group chat. Bot need to be Admin
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+   						$UserID: Unique identifier for the target user
+   Return Value(s):  	Return true if success, false otherwise
+  =============================================================================== */
+function _KickChatMember($ChatID,$UserID){
+	global $API_URL;
+	$query = $API_URL . "/kickChatMember?chat_id=" . $ChatID . "&user_id=" . $UserID;;
+	$json = file_get_contents($query);
+	$response = json_decode($json);
+	if($response->result == 1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* ===============================================================================
+   Function Name..:		_UnbanChatMember()
+   Description....:     Unban an user previously kicked from a Group chat. Bot need to be Admin
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+   						$UserID: Unique identifier for the target user
+   Return Value(s):  	Return true if success, false otherwise
+  =============================================================================== */
+function _UnbanChatMember($ChatID,$UserID){
+	global $API_URL;
+	$query = $API_URL . "/unbanChatMember?chat_id=" . $ChatID . "&user_id=" . $UserID;;
+	$json = file_get_contents($query);
+	$response = json_decode($json);
+	if($response->result == 1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* ===============================================================================
+   Function Name..:		_SendInlineQuery()
+   Description....:     POC of inline query answer, not work yes
+   Parameter(s)...:     $QueryID: Unique identifier for the current query
+   						$Response: Array of answer to send
+   Return Value(s):  	Return true if success, false otherwise
+  =============================================================================== */
+// function _SendInlineQuery($queryid,$response){
+	// global $API_URL;
+	// $query = $API_URL . "/answerInlineQuery?inline_query_id=" . $queryid . "&results=" . json_encode($response);
+	// $hCurl = curl_init(); 
+	// curl_setopt($hCurl, CURLOPT_URL, $query); 
+	// curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	// $output = curl_exec($hCurl);
+// }
+  
 
 /* ===============================================================================
    Function Name..:		_GetFilePath()
@@ -377,8 +510,77 @@ function _DownloadFile($FilePath){
    Return Value(s):  	Return array with information about message
   =============================================================================== */
 function _JSONDecode($newUpdates){
-	$update = json_decode($newUpdates, true); 
-	$message = $update['result']['0'];
+$update = json_decode($newUpdates, true);
+	if(isset($update['result']['0']['inline_query'])){
+		//Inline Query
+		$message = $update['result']['0'];
+		$update_id = $message['update_id'];
+		$data = $message['inline_query'];
+			$query_id = $data['id'];
+			$from = $data['from'];
+				$first_name = $from['first_name'];
+				$username = $from['username'];
+			$text = $data['query'];
+		$msgData = array(
+			"type" => "inline",
+			"offset" => $update_id,
+			"query_id" => $query_id,
+			"first_name" => $first_name,
+			"username" => $username,
+			"text" => $text,
+		);
+		return $msgData;
+	}elseif(($update['result']['0']['message']['chat']['type'] == 'group') or ($update['result']['0']['message']['chat']['type'] == 'supergroup')){
+		//Group Message
+		$message = $update['result']['0'];
+		$update_id = $message['update_id'];
+		$data = $message['message'];
+			$message_id = $data['message_id'];
+			$from = $data['from'];
+				$chat_id    = $from['id'];
+				$first_name = $from['first_name'];
+				$username   = $from['username'];
+			$chat = $data['chat'];
+				$groupid   = $chat['id'];
+				$groupname = $chat['title'];
+			
+			if(array_key_exists('left_chat_member',$data)){ //Left Chat Member Event
+				$Event = "left";
+				$MemberID = $data['left_chat_member']['id'];
+				$MemberFirstName = $data['left_chat_member']['first_name'];
+				$MemberUsername = $data['left_chat_member']['username'];
+			}elseif(array_key_exists('new_chat_member',$data)){ //New Chat Member Event
+				$Event = "new";
+				$MemberID = $data['new_chat_member']['id'];
+				$MemberFirstName = $data['new_chat_member']['first_name'];
+				$MemberUsername  = $data['new_chat_member']['username'];
+			}else{
+				$text = $data['text'];
+			}
+			
+		$msgData = array(
+			"type" 	 	 => "group",
+			"offset" 	 => $update_id,
+			"message_id" => $message_id,
+			"chat_id" 	 => $chat_id,
+			"first_name" => $first_name,
+			"username" 	 => $username,
+			"group_id" 	 => $groupid,
+			"group_name" => $groupname,			
+		);
+		
+		if(isset($MemberID)){
+			$msgData['event'] = $Event;
+			$msgData['member_id'] = $MemberID;
+			$msgData['member_first_name'] = $MemberFirstName;
+			$msgData['member_username'] = $MemberUsername;
+		}else{
+			$msgData['text'] = $text;
+		}
+		return $msgData;
+	}elseif($update['result']['0']['message']['chat']['type'] == 'private'){	
+	//Private Message
+		$message = $update['result']['0'];
 		$update_id = $message['update_id'];
 		$data = $message['message'];
 			$message_id = $data['message_id'];
@@ -387,14 +589,29 @@ function _JSONDecode($newUpdates){
 				$first_name = $from['first_name'];
 				$username = $from['username'];
 			$text = $data['text'];
-	$msgData = array(
-		"offset" => $update_id,
-		"message_id" => $message_id,
-		"chat_id" => $chat_id,
-		"first_name" => $first_name,
-		"username" => $username,
-		"text" => $text,
-	);
-	return $msgData;
-};
+			if(array_key_exists('reply_to_message',$data)){
+				$reply = $data['reply_to_message'];
+					$originalMsgID = $data['reply_to_message']['message_id'];
+					//add original msg info
+					$originalMsgText = $reply['text'];
+			}
+		$msgData = array(
+			"type" => "private",
+			"offset" => $update_id,
+			"message_id" => $message_id,
+			"chat_id" => $chat_id,
+			"first_name" => $first_name,
+			"username" => $username,
+			"text" => $text,
+		);
+		
+		if(isset($originalMsgID)){
+			$msgData['reply'] = 'yes';
+			$msgData['original_msg_id']   = $originalMsgID;
+			$msgData['original_msg_text'] = $originalMsgText;
+		}
+		
+		return $msgData;
+	}
+}
 ?>
