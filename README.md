@@ -52,23 +52,19 @@ The array returned by _Polling function contain:
 * **_SendContact:** _Send a contact with Phone and First Name (Return True);_
 * **_GetUserProfilePhotos:** _Get the user profile pictures (Return an Array with the FileID of each photo);_
 * **_GetChat:** _Get information about specific chat (Return a string with info);_
-* **_GetChatAdmin:**_Get information about all chat administrators (Return an array);_
-* **_GetChatMemberCount:**_Get number of chat members (Return an integer);_
-* **_GetChatMember:**_GetInformation about a specific user (Return an array);_
-* **_LeaveChat:**_Leave the current chat (Return true if success, false otherwise);_
-* **_KickChatMember:**_Kick an user from a Group chat (Return true if success, false otherwise);_
-* **_UnbanChatMember:**_Unban an user previously kicked from a Group chat (Return true if success, false otherwise);_
+* **_GetChatAdmin:** _Get information about all chat administrators (Return an array);_
+* **_GetChatMemberCount:** _Get number of chat members (Return an integer);_
+* **_GetChatMember:** _GetInformation about a specific user (Return an array);_
+* **_LeaveChat:** _Leave the current chat (Return true if success, false otherwise);_
+* **_KickChatMember:** _Kick an user from a Group chat (Return true if success, false otherwise);_
+* **_UnbanChatMember:** _Unban an user previously kicked from a Group chat (Return true if success, false otherwise);_
 * **_GetFileID:** _Get FileID of a the file uploaded(Return a string);_
 * **_GetFilePath:** _Get the path of a specific file, require file ID (Return a string);_
 * **_DownloadFile:** _Download a file from the server, require file path (Return True);_
 * **_JSONDecode:** _Decode incoming message (Return an array with some information like Chat ID ecc);_
 
 ### Changelog:
-**29/01/2017** - v1.1 - _Changed order of arguments in SendMsg function;_
-						_Added DisableNotification to all send media function;_
-						_Updated JSONDecode: now can distinguish from private or group chat, left or new member event and also inline query;_
-						_Added functions: GetChatAdmin, GetChatMemberCount, GetChatMember, LeaveChat, KickChatMember and UnbanChatMember;_
-						_Minor bug fixes;
+**29/01/2017** - v1.1 - • _Changed order of arguments in SendMsg function; • Added DisableNotification to all send media function; • Updated JSONDecode: now can distinguish from private or group chat, left or new member event and also inline query; • Added functions: GetChatAdmin, GetChatMemberCount, GetChatMember, LeaveChat, KickChatMember and UnbanChatMember; • Minor bug fixes;_
 
 **11/01/2016** - v1.0 - _First Release._
 
