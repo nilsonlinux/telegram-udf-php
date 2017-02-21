@@ -64,7 +64,7 @@ The array returned by _Polling function contain:
 * **_JSONDecode:** _Decode incoming message (Return an array with some information like Chat ID ecc);_
 
 ### Changelog:
-**21/02/2017** - v1.2 - • _DownloadFile function now return file name; • JSONDecode function now can manage callback query, incoming photos and text messages in the groups;
+**21/02/2017** - v1.2 - • _DownloadFile function now return file name; • JSONDecode function now can manage callback query, incoming photos and text messages in the groups;_
 
 **29/01/2017** - v1.1 - • _Changed order of arguments in SendMsg function; • Added DisableNotification to all send media function; • Updated JSONDecode: now can distinguish from private or group chat, left or new member event and also inline query; • Added functions: GetChatAdmin, GetChatMemberCount, GetChatMember, LeaveChat, KickChatMember and UnbanChatMember; • Minor bug fixes;_
 
