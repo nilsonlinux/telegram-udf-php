@@ -5,7 +5,7 @@
 	  Author		->	Luca aka LinkOut
 	  Description	->	Control Telegram Bot with PHP
 	  Language		->	English
-	  Status		->	Fully functional, but some functions are missing (like group function)
+	  Status		->	Fully functional, missing some json deconding (like incoming video, document...)
    Documentation:
 	  Telegram API	->	https://core.telegram.org/bots/api
 	  GitHub Page	->	https://github.com/xLinkOut/telegram-udf-php
@@ -92,7 +92,7 @@ function _GetMe(){
 						$DisableNotification: True/False (optional) - Send message silently
    Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
   =============================================================================== */
-function _SendMsg($ChatID,$Text,$DisableNotification = false,$ParseMode = '',$KeyboardMarkup = 'default',$ResizeKeyboard = false, $OneTimeKeyboard = false, $DisableWebPreview = false){
+function _SendMsg($ChatID,$Text,$KeyboardMarkup = 'default',$DisableNotification = false,$ParseMode = '',$ResizeKeyboard = false, $OneTimeKeyboard = false, $DisableWebPreview = false){
 	global $API_URL;
 	$query = $API_URL . "/sendMessage?chat_id=" . $ChatID . "&text=" . $Text;
 	if($DisableNotification == true){$query &= "&disable_notification=True";}
@@ -500,7 +500,7 @@ function _DownloadFile($FilePath){
 	$tmp = explode('/',$FilePath);
 	$fname = $tmp[1];
 	file_put_contents($fname, file_get_contents($query));
-	return true;
+	return $fname;
 }
 
 /* ===============================================================================
@@ -510,28 +510,82 @@ function _DownloadFile($FilePath){
    Return Value(s):  	Return array with information about message
   =============================================================================== */
 function _JSONDecode($newUpdates){
-$update = json_decode($newUpdates, true);
-	if(isset($update['result']['0']['inline_query'])){
-		//Inline Query
+	$update = json_decode($newUpdates, true);
+	//print_r($update);
+	if(isset($update['result']['0']['channel_post'])){ //Incoming post from channel where bot is admin
+		$offset = $update['result']['0']['update_id'];
+		
+		$data = $update['result']['0']['channel_post'];
+			$message_id = $data['message_id'];
+			$chat_id    = $data ['chat']['id'];
+			$chat_title = $data['chat']['title'];
+			$chat_username = $data['chat']['username'];
+			
+			if(isset($data['text']))
+				$text = $data['text'];
+			
+			$msgData = array('type' => 'channel_post',
+							 'offset' => $offset,
+							 'message_id' => $message_id,
+							 'chat_id' => $chat_id,
+							 'chat_title' => $chat_title,
+							 'chat_username' => $chat_username);
+			if(isset($text))
+				$msgData['text'] = $text;
+			
+			return $msgData;
+			
+	}elseif(isset($update['result']['0']['callback_query'])){ //Incoming callback query from inline keyboard
+		$data = $update['result']['0'];
+			$offset = $data['update_id'];
+			$callback_query = $data['callback_query'];
+			$callback_id = $callback_query['id'];
+					$user_id    = $callback_query['from']['id'];
+					$first_name = $callback_query['from']['first_name'];
+					$username   = $callback_query['from']['username'];
+				$message = $callback_query['message'];
+					$message_id = $message['message_id'];
+					$chat_id    = $message['chat']['id'];
+					$chat_name  = $message['chat']['title'];
+					$chat_username  = $message['chat']['username'];
+					if(isset($message['text']))
+						$text  = $message['text'];
+				$chat_instance = $callback_query['chat_instance'];
+				$callback_data = $callback_query['data'];
+				
+		$msgData = array('type'          => 'inline_keyboard_callback',
+						 'offset'        => $offset,
+						 'callback_id'   => $callback_id,
+						 'callback_data' => $callback_data,
+						 'user_id'       => $user_id,
+						 'first_name'    => $first_name,
+						 'username'      => $username,
+						 'message_id'    => $message_id,
+						 'chat_id'       => $chat_id,
+						 'chat_name'     => $chat_name,
+						 'chat_username' => $chat_username,
+						 'text' 	     => $text,
+						 'chat_instance' => $chat_instance); 
+		return $msgData;
+	}elseif(isset($update['result']['0']['inline_query'])){ //Incoming inline query from an inline command
 		$message = $update['result']['0'];
 		$update_id = $message['update_id'];
 		$data = $message['inline_query'];
 			$query_id = $data['id'];
 			$from = $data['from'];
 				$first_name = $from['first_name'];
-				$username = $from['username'];
+				$username   = $from['username'];
 			$text = $data['query'];
 		$msgData = array(
-			"type" => "inline",
-			"offset" => $update_id,
-			"query_id" => $query_id,
+			"type"       => "inline",
+			"offset"     => $update_id,
+			"query_id"   => $query_id,
 			"first_name" => $first_name,
-			"username" => $username,
-			"text" => $text,
+			"username"   => $username,
+			"text"       => $text,
 		);
 		return $msgData;
-	}elseif(($update['result']['0']['message']['chat']['type'] == 'group') or ($update['result']['0']['message']['chat']['type'] == 'supergroup')){
-		//Group Message
+	}elseif(($update['result']['0']['message']['chat']['type'] == 'group') or ($update['result']['0']['message']['chat']['type'] == 'supergroup')){ //Incoming message from group (include left and new member)
 		$message = $update['result']['0'];
 		$update_id = $message['update_id'];
 		$data = $message['message'];
@@ -543,7 +597,6 @@ $update = json_decode($newUpdates, true);
 			$chat = $data['chat'];
 				$groupid   = $chat['id'];
 				$groupname = $chat['title'];
-			
 			if(array_key_exists('left_chat_member',$data)){ //Left Chat Member Event
 				$Event = "left";
 				$MemberID = $data['left_chat_member']['id'];
@@ -578,8 +631,7 @@ $update = json_decode($newUpdates, true);
 			$msgData['text'] = $text;
 		}
 		return $msgData;
-	}elseif($update['result']['0']['message']['chat']['type'] == 'private'){	
-	//Private Message
+	}elseif($update['result']['0']['message']['chat']['type'] == 'private'){//Incoming message from a private chat
 		$message = $update['result']['0'];
 		$update_id = $message['update_id'];
 		$data = $message['message'];
@@ -588,28 +640,65 @@ $update = json_decode($newUpdates, true);
 				$chat_id = $from['id'];
 				$first_name = $from['first_name'];
 				$username = $from['username'];
-			$text = $data['text'];
+			if(array_key_exists('text',$data))
+				$text = $data['text'];
 			if(array_key_exists('reply_to_message',$data)){
 				$reply = $data['reply_to_message'];
-					$originalMsgID = $data['reply_to_message']['message_id'];
-					//add original msg info
-					$originalMsgText = $reply['text'];
+					$originalMsgID     = $data['reply_to_message']['message_id'];
+					$originalUserID    = $data['reply_to_message']['from']['id'];
+					$originalFirstName = $data['reply_to_message']['from']['first_name'];
+					$originalUsername  = $data['reply_to_message']['from']['username'];
+					$originalChatID    = $data['reply_to_message']['chat']['id'];
+					$originalChatTitle = $data['reply_to_message']['from']['title'];
+					$originalMsgText   = $data['reply_to_message']['text'];
 			}
+			if(isset($data['forward_from'])){
+				$forwardID		  = $data['forward_from']['id'];
+				$forwardFirstName = $data['forward_from']['first_name'];
+				$forwardUsername  = $data['forward_from']['username'];
+			}
+			if(array_key_exists('photo',$data)){
+				$counter  = count($data['photo']) - 1;
+				$photo_id = $data['photo'][$counter]['file_id'];
+			}
+			if(array_key_exists('caption',$data))
+				$caption = $data['caption'];
+			
 		$msgData = array(
-			"type" => "private",
-			"offset" => $update_id,
+			"type"       => "private",
+			"offset"     => $update_id,
 			"message_id" => $message_id,
-			"chat_id" => $chat_id,
+			"chat_id"    => $chat_id,
 			"first_name" => $first_name,
-			"username" => $username,
-			"text" => $text,
+			"username"   => $username,
 		);
+		
+		if(isset($text))
+			$msgData['text'] = $text;
 		
 		if(isset($originalMsgID)){
 			$msgData['reply'] = 'yes';
-			$msgData['original_msg_id']   = $originalMsgID;
-			$msgData['original_msg_text'] = $originalMsgText;
+			$msgData['original_message_id'] = $originalMsgID;
+			$msgData['original_user_id']    = $originalUserID;
+			$msgData['original_first_name'] = $originalFirstName;
+			$msgData['original_username']   = $originalUsername;
+			$msgData['original_chat_id']    = $originalChatID;
+			$msgData['original_chat_title'] = $originalChatTitle;
+			$msgData['original_text']       = $originalMsgText;
 		}
+		
+		if(isset($forwardFromID)){
+			$msgData['forward'] = 'yes';
+			$msgData['forward_id'] = $forwardID;
+			$msgData['forward_first_name'] = $forwardFirstName;
+			$msgData['forward_username'] = $forwardUsername;
+		}
+		
+		if(isset($photo_id)){
+			$msgData['photo_id'] = $photo_id;
+		}		
+		if(isset($caption))
+			$msgData['caption'] = $caption;
 		
 		return $msgData;
 	}
