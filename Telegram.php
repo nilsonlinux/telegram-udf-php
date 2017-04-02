@@ -179,39 +179,6 @@ function _SendPhoto($ChatID,$Path,$Caption = '',$DisableNotification = false,$Re
 }
 
 /* ===============================================================================
-   Function Name..:		_SendAudio()
-   Description....:     Send an audio
-   Parameter(s)...:     $ChatID: Unique identifier for the target chat
-						$Path: Path to local file
-						$Caption: Caption to send with audio (optional)
-						$DisableNotification: True to send silently message
-						$ReplyMarkup: Send custom keyboard markup (See documentation)
-						$ReplyTo: If it's a reply, this must be the message id of the original message
-   Return Value(s):  	If success return the File ID, else false
-  =============================================================================== */
-function _SendAudio($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
-	global $API_URL;
-	$query = $API_URL . "/sendAudio";
-	$post_fields = array('chat_id' => $ChatID,'audio' => new CURLFile(realpath($Path)));
-	if($Caption != '') $post_fields['caption'] = $Caption;
-	if($DisableNotification == true) $post_fields['disable_notification'] = true;
-	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
-	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
-	$hCurl = curl_init(); 
-	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
-	curl_setopt($hCurl, CURLOPT_URL, $query); 
-	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
-	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
-	$output = curl_exec($hCurl);
-	$response = json_decode($output);
-	if($response != '' and $response->ok == 1)
-		return _GetFileID($output,'audio');	
-	else
-		// return "Failed to send {$Path} to {$ChatID}";
-		return false;
-}
-
-/* ===============================================================================
    Function Name..:		_SendVideo()
    Description....:     Send a video
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
@@ -239,6 +206,39 @@ function _SendVideo($ChatID,$Path,$Caption = '',$DisableNotification = false,$Re
 	$response = json_decode($output);
 	if($response != '' and $response->ok == 1)
 		return _GetFileID($output,'video');	
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
+}
+
+/* ===============================================================================
+   Function Name..:		_SendAudio()
+   Description....:     Send an audio
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+						$Path: Path to local file
+						$Caption: Caption to send with audio (optional)
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
+  =============================================================================== */
+function _SendAudio($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
+	global $API_URL;
+	$query = $API_URL . "/sendAudio";
+	$post_fields = array('chat_id' => $ChatID,'audio' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
+	$hCurl = curl_init(); 
+	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
+	curl_setopt($hCurl, CURLOPT_URL, $query); 
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
+	$output = curl_exec($hCurl);
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'audio');	
 	else
 		// return "Failed to send {$Path} to {$ChatID}";
 		return false;
@@ -554,7 +554,7 @@ function _UnbanChatMember($ChatID,$UserID){
    Function Name..:		_AnswerInlineQuery()
    Description....:     Answer to an inline query
    Parameter(s)...:     $QueryID: Unique identifier for the current query
-   						$Response: Array of answer to send (see documentation)
+   						$Results: Array of answer to send (see documentation)
 						$CacheTime: Time, in seconds, to cache the results (default 300)
    Return Value(s):  	Return true
   =============================================================================== */
@@ -572,7 +572,7 @@ function _AnswerInlineQuery($QueryID,$Results,$CacheTime = '300'){
 }
 /* ===============================================================================
    Function Name..:		_AnswerCallbackQuery()
-   Description....:     Answer to an inline query
+   Description....:     Answer to a callback generated from inline button
    Parameter(s)...:     $QueryID: Unique identifier for the current query
    						$Response: Array of answer to send (see documentation)
 						$CacheTime: Time, in seconds, to cache the results (default 300)
@@ -623,11 +623,11 @@ function _EditMessageText($ChatID,$MessageID,$Text){
 
 /* ===============================================================================
    Function Name..:		_EditMessageCaption()
-   Description....:     Answer to an inline query
-   Parameter(s)...:     $QueryID: Unique identifier for the current query
-   						$Response: Array of answer to send (see documentation)
-						$CacheTime: Time, in seconds, to cache the results (default 300)
-   Return Value(s):  	Return true
+   Description....:     Edit caption of a photo
+   Parameter(s)...:     $ChatID: Unique identifier for the current chat
+   						$MessageID: Unique identifier for the message to edit
+						$Text: New text to send
+   Return Value(s):  	Return true if success, else false
   =============================================================================== */
 function _EditMessageCaption($ChatID,$MessageID,$Caption){
 	global $API_URL;
@@ -650,10 +650,10 @@ function _EditMessageCaption($ChatID,$MessageID,$Caption){
 /* ===============================================================================
    Function Name..:		_EditMessageReplyMarkup()
    Description....:     Edit the keyboard of a message
-   Parameter(s)...:     $QueryID: Unique identifier for the current query
-   						$Response: Array of answer to send (see documentation)
-						$CacheTime: Time, in seconds, to cache the results (default 300)
-   Return Value(s):  	Return true
+   Parameter(s)...:     $ChatID: Unique identifier for the current chat
+   						$MessageID: Unique identifier for the message to edit
+						$Text: New text to send
+   Return Value(s):  	Return true if success, else false
   =============================================================================== */
 function _EditMessageReplyMarkup($ChatID,$MessageID,$Markup){
 	global $API_URL;
@@ -674,20 +674,6 @@ function _EditMessageReplyMarkup($ChatID,$MessageID,$Markup){
 }
 
 /* ===============================================================================
-   Function Name..:		_GetFilePath()
-   Description....:     Get path of a specific file (specified by FileID) on Telegram Server
-   Parameter(s)...:     $FileID: Unique identifie for the file
-   Return Value(s):  	Return FilePath as String
-  =============================================================================== */
-function _GetFilePath($FileID){
-	global $API_URL;
-	$query = $API_URL . "/getFile?file_id=" . $FileID;
-	$response = file_get_contents($query);
-	$json = json_decode($response);
-	return $json->result->file_path;
-}
-
-/* ===============================================================================
    Function Name..:		_GetFileID()
    Description....:     Get file ID of the last uploaded file
    Parameter(s)...:     $Output: Response from HTTP Request
@@ -701,6 +687,20 @@ function _GetFileID($output,$type){
 	if($type == 'document'){return $outputArray->result->document->file_id;}
 	if($type == 'voice'){return $outputArray->result->voice->file_id;}
 	if($type == 'sticker'){return $outputArray->result->sticker->file_id;}
+}
+
+/* ===============================================================================
+   Function Name..:		_GetFilePath()
+   Description....:     Get path of a specific file (specified by FileID) on Telegram Server
+   Parameter(s)...:     $FileID: Unique identifie for the file
+   Return Value(s):  	Return FilePath as String
+  =============================================================================== */
+function _GetFilePath($FileID){
+	global $API_URL;
+	$query = $API_URL . "/getFile?file_id=" . $FileID;
+	$response = file_get_contents($query);
+	$json = json_decode($response);
+	return $json->result->file_path;
 }
 
 /* ===============================================================================
