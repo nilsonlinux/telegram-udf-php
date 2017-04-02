@@ -16,52 +16,52 @@
 
 ### How to wait for incoming messages:
 
-This library doesn't use WebHook, but GetUpdates method: you can host your script anywhere, on any remote or local server because you don't need SSL Certificate (required instead to use WebHook method).
+This library doesn't use WebHook, but GetUpdates method aka Long Polling: you can host your script anywhere, on any remote or local server because you don't need SSL Certificate (required instead to use WebHook method).
 To wait for incoming messages you have to put the bot in Polling State, as this
 
 ```php
-While 1(true){ //Create a While to restart Polling after processing a message
+While (true){ //Create a While to restart Polling after processing a messag
 	$msgData = _Polling() //_Polling function return an array with info about message
 	_SendMsg($msgData['chat_id'],$msgData['text']); //Send a message to the same user with the same text
 }
 ```
+Polling function return an array with information about the message, like Chat ID, Username, Text or File ID if it contain a photo, video, document... Check JSONDecode function for further information.
 
-The array returned by _Polling function contain:
-* $msgData[0] = Offset of the current update (used to 'switch' to next update)
-* $msgData[1] = Message ID of the current message
-* $msgData[2] = ChatID used to interact with the user
-* $msgData[3] = First name of the user
-* $msgData[4] = Username of the user
-* $msgData[5] = Text of the message
 
 ## Functions:
-* **_InitBot:** _Initialize bot (require BotID and BotTOKEN);_
-* **_Polling:** _Wait for incoming messages;_
-* **_GetUpdates:** _Get new messages from Telegram Server (Return a string);_
-* **_GetMe:** _Get information about the bot (Return a string);_
-* **_SendMsg:** _Send simple text message (support Markdown/HTML, Keyboard ecc...)(Return True);_
-* **_ForwardMsg:** _Forward a message from a chat to another(Return True);_
-* **_SendPhoto:** _Send a photo to a specific chat (Return file ID);_
-* **_SendVideo:** _Send a video to a specific chat (Return file ID);_
-* **_SendAudio:** _Send an audio to a specific chat (Return file ID);_
-* **_SendDocument:** _Send a document to a specific chat (Return file ID);_
-* **_SendVoice:** _Send a voice to a specific chat (Return file ID);_
-* **_SendSticker:** _Send a sticker to a specific chat (Return file ID);_
-* **_SendChatAction:** _Set the 'Chat Action' for 5 seconds (Typing, Sending photo...)(Return True);_
-* **_SendLocation:** _Send a location (Return True);_
-* **_SendContact:** _Send a contact with Phone and First Name (Return True);_
-* **_GetUserProfilePhotos:** _Get the user profile pictures (Return an Array with the FileID of each photo);_
-* **_GetChat:** _Get information about specific chat (Return a string with info);_
-* **_GetChatAdmin:** _Get information about all chat administrators (Return an array);_
-* **_GetChatMemberCount:** _Get number of chat members (Return an integer);_
-* **_GetChatMember:** _GetInformation about a specific user (Return an array);_
-* **_LeaveChat:** _Leave the current chat (Return true if success, false otherwise);_
-* **_KickChatMember:** _Kick an user from a Group chat (Return true if success, false otherwise);_
-* **_UnbanChatMember:** _Unban an user previously kicked from a Group chat (Return true if success, false otherwise);_
-* **_GetFileID:** _Get FileID of a the file uploaded(Return a string);_
-* **_GetFilePath:** _Get the path of a specific file, require file ID (Return a string);_
-* **_DownloadFile:** _Download a file from the server, require file path (Return True);_
-* **_JSONDecode:** _Decode incoming message (Return an array with some information like Chat ID ecc);_
+* **InitBot:** _Initialize bot (require BotID and BotTOKEN);_
+* **Polling:** _Wait for incoming messages;_
+* **GetUpdates:** _Get new messages from Telegram Server;_
+* **GetMe:** _Get information about the bot;_
+* **SendMsg:** _Send simple text message without any parameters;_
+* **CurlSendMsg:** _Send text message, support custom parse mode, reply markup and other param;_
+* **ForwardMsg:** _Forward a message from a chat to another;_
+* **SendPhoto:** _Send a photo to a specific chat;_
+* **SendVideo:** _Send a video to a specific chat;_
+* **SendAudio:** _Send an audio to a specific chat;_
+* **SendDocument:** _Send a document to a specific chat;_
+* **SendVoice:** _Send a voice to a specific chat;_
+* **SendSticker:** _Send a sticker to a specific chat;_
+* **SendChatAction:** _Set the 'Chat Action' for 5 seconds (Typing, Sending photo...);_
+* **SendLocation:** _Send a location;_
+* **SendContact:** _Send a contact with Phone and First Name;_
+* **GetUserProfilePhotos:** _Get the user profile pictures;_
+* **GetChat:** _Get information about specific chat;_
+* **GetChatAdmin:** _Get information about all chat administrators;_
+* **GetChatMemberCount:** _Get number of chat members;_
+* **GetChatMember:** _GetInformation about a specific user;_
+* **LeaveChat:** _Leave the current chat;_
+* **KickChatMember:** _Kick an user from a Group chat;_
+* **UnbanChatMember:** _Unban an user previously kicked from a Group chat;_
+* **AnswerInlineQuery:** _Answer to an inline query with an array of result;_
+* **AnswerCallbackQuery:** _Answer to a callback generted from inline button;_
+* **EditMessageText:** _Edit text of a message;_
+* **EditMessageCaption:** _Edit caption of a photo;_
+* **EditMessageReplyMarkup:** _Edit the keyboard of a message;_
+* **GetFileID:** _Get FileID of a the file uploaded;_
+* **GetFilePath:** _Get the path of a specific file, require file ID;_
+* **DownloadFile:** _Download a file from the server, require file path;_
+* **JSONDecode:** _Decode incoming message;_
 
 ### Changelog:
 **21/02/2017** - v1.2 - • _DownloadFile function now return file name; • JSONDecode function now can manage callback query, incoming photos and text messages in the groups;_
