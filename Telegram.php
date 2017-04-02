@@ -707,7 +707,7 @@ function _GetFilePath($FileID){
    Function Name..:		_DownloadFile()
    Description....:     Download and save locally a file from the Telegram Server by FilePath
    Parameter(s)...:     $FilePath: Path of the file on Telegram Server
-   Return Value(s):  	Return True
+   Return Value(s):  	Return filename
   =============================================================================== */
 function _DownloadFile($FilePath){
 	global $BOT_TOKEN;
