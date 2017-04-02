@@ -64,6 +64,8 @@ Polling function return an array with information about the message, like Chat I
 * **JSONDecode:** _Decode incoming message;_
 
 ### Changelog:
+**02/04/2017** - v1.3 - • _Added: AnswerInlineQuery, AnswerCallbackQuery, EditMessageText, EditMessageCaption, EditMessageReplyMarkup, CurlSendMsg; • Now, SendMsg take only two arguments: ChatID and Text. Also, if the http request fail (maybe for illegal charaters) it automatically use CurlSendMsg to send the message and return true if success. • CurlSendMsg take a third arguments: an array that contain optional parameter like parse mode, reply markup, disable notification... • All Send* function now return true only if success, false otherwise. • JSONDecode now fully support Channel Post, Inline Query, Callback Query and return additional information about photo, video, audio, voice and document;_ 
+
 **21/02/2017** - v1.2 - • _DownloadFile function now return file name; • JSONDecode function now can manage callback query, incoming photos and text messages in the groups;_
 
 **29/01/2017** - v1.1 - • _Changed order of arguments in SendMsg function; • Added DisableNotification to all send media function; • Updated JSONDecode: now can distinguish from private or group chat, left or new member event and also inline query; • Added functions: GetChatAdmin, GetChatMemberCount, GetChatMember, LeaveChat, KickChatMember and UnbanChatMember; • Minor bug fixes;_
