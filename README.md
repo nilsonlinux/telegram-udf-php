@@ -63,8 +63,16 @@ Polling function return an array with information about the message, like Chat I
 * **DownloadFile:** _Download a file from the server, require file path;_
 * **JSONDecode:** _Decode incoming message;_
 
+### Todo List:
+- [ ] WebHook method function;
+- [ ] Keyboard button constructor;
+- [ ] Inline query result constructor;
+- [ ] Some example file;
+- [ ] Full Inline support;
+- [ ] Full Games support;
+
 ### Changelog:
-**02/04/2017** - v1.3 - • _Added: AnswerInlineQuery, AnswerCallbackQuery, EditMessageText, EditMessageCaption, EditMessageReplyMarkup, CurlSendMsg; • Now, SendMsg take only two arguments: ChatID and Text. Also, if the http request fail (maybe for illegal charaters) it automatically use CurlSendMsg to send the message and return true if success. • CurlSendMsg take a third arguments: an array that contain optional parameter like parse mode, reply markup, disable notification... • All Send* function now return true only if success, false otherwise. • JSONDecode now fully support Channel Post, Inline Query, Callback Query and return additional information about photo, video, audio, voice and document;_ 
+**02/04/2017** - v1.3 - • _Added: AnswerInlineQuery, AnswerCallbackQuery, EditMessageText, EditMessageCaption, EditMessageReplyMarkup, CurlSendMsg; • Now, SendMsg take only two arguments: ChatID and Text. Also, if the http request fail (maybe for illegal charaters) it automatically use CurlSendMsg to send the message and return true if success. • CurlSendMsg take a third arguments: an array that contain optional parameter like parse mode, reply markup, disable notification... • All Send* function now return true only if success, false otherwise. Also, all this funciton take another two arguments: ReplyMarkup, to send a keyboard with a multimedia message, and a message ID to reply to a specific message; • JSONDecode now fully support Channel Post, Inline Query, Callback Query and return additional information about photo, video, audio, voice and document; • Removed Test.php file;_ 
 
 **21/02/2017** - v1.2 - • _DownloadFile function now return file name; • JSONDecode function now can manage callback query, incoming photos and text messages in the groups;_
 
