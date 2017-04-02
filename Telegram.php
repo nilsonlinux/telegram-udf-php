@@ -5,20 +5,15 @@
 	  Author		->	Luca aka LinkOut
 	  Description	->	Control Telegram Bot with PHP
 	  Language		->	English
-	  Status		->	Fully functional, missing some json deconding (like incoming video, document...)
+	  Status		->	Fully functional.
    Documentation:
 	  Telegram API	->	https://core.telegram.org/bots/api
 	  GitHub Page	->	https://github.com/xLinkOut/telegram-udf-php
-   Author Information:
-	  GitHub	->	https://github.com/xLinkOut
-	  Telegram	->	https://t.me/LinkOut
-	  Instagram	->	https://instagram.com/lucacirillo.jpg
-	  Email		->	mailto:luca.cirillo5@gmail.com
   =============================================================================== */
 
-$BOT_TOKEN = '';
-$API_URL = 'https://api.telegram.org/bot';
-$Offset = '0';
+$BOT_TOKEN 	= '';
+$API_URL 	= 'https://api.telegram.org/bot';
+$Offset 	= '0';
 
 /* ===============================================================================
    Function Name..:    	_InitBot()
@@ -37,18 +32,12 @@ function _InitBot($BotToken){
    Function Name..:    	_Polling()
    Description....:     Wait for incoming messages from user
    Parameter(s)...:     None
-   Return Value(s):		Return an array with information about messages:
-						   $msgData[0] = Offset of the current update (used to 'switch' to next update)
-						   $msgData[1] = Message ID of the current message
-						   $msgData[2] = ChatID used to interact with the user
-						   $msgData[3] = First name of the user
-						   $msgData[4] = Username of the user
-						   $msgData[5] = Text of the message
+   Return Value(s):		Return an array with some informations about messages
   =============================================================================== */
 function _Polling(){
 	global $Offset;
 	while (true){
-		sleep(1);
+		// sleep(1); 
 		$newUpdates = _GetUpdates();
 		if(!strpos($newUpdates,"update_id")){continue;}
 		$msgData = _JSONDecode($newUpdates);
@@ -81,44 +70,79 @@ function _GetMe(){
 
 /* ===============================================================================
    Function Name..:		_SendMsg()
-   Description....:     Send simple text message
+   Description....:     Send simple text message without any other parameters
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Text: Text of the message
-						$ParseMode: Markdown/HTML (optional)- https://core.telegram.org/bots/api#sendmessage
-						$KeyboardMarkup: Custom Keyboards (optional) - https://core.telegram.org/bots/api#replykeyboardmarkup
-						$ResizeKeyboard: True/False (optional) - Requests clients to resize the keyboard vertically for optimal fit
-						$OneTimeKeyboard: True/False (optional) - Requests clients to hide the keyboard as soon as it's been used
-						$DisableWebPreview: True/False (optional) - Disables link previews for links in this message
-						$DisableNotification: True/False (optional) - Send message silently
-   Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
+   Return Value(s):  	If success return Message ID, else return false
   =============================================================================== */
-function _SendMsg($ChatID,$Text,$KeyboardMarkup = 'default',$DisableNotification = false,$ParseMode = '',$ResizeKeyboard = false, $OneTimeKeyboard = false, $DisableWebPreview = false){
+function _SendMsg($ChatID,$Text){
 	global $API_URL;
 	$query = $API_URL . "/sendMessage?chat_id=" . $ChatID . "&text=" . $Text;
-	if($DisableNotification == true){$query &= "&disable_notification=True";}
-	if($ParseMode == "Markdown"){$query &= "&parse_mode=markdown";}
-	if($ParseMode == "HTML"){$query &= "&parse_mode=html";}
-	if($KeyboardMarkup != 'default'){$query &= "&reply_markup=" . $KeyboardMarkup;}
-	if($ResizeKeyboard == true){$query &= "&resize_keyboard=True";}
-    if($OneTimeKeyboard == true){$query &= "&one_time_keyboard=True";}
-    if($DisableWebPreview == true){$query &= "&disable_web_page_preview=True";}
 	$response = file_get_contents($query);
-	return true;
+	$response = json_decode($response);
+	if(!($response->ok == 1))
+		return _CurlSendMsg($ChatID,$Text);
+	elseif($response->ok == 1)
+		return $response->result->message_id;
+	else
+		return false;
 }
 
+/* ===============================================================================
+   Function Name..:		_CurlSendMsg()
+   Description....:     Send simple text message when HTTP method failed
+   Parameter(s)...:     $ChatID: Unique identifier for the target chat
+						$Text: Text of the message
+						$Param: array with optional parameters
+							reply_markup: https://core.telegram.org/bots/api#replykeyboardmarkup
+							parse_mode: markdown/html https://core.telegram.org/bots/api#sendmessage
+							resize_keyboard: true/false requests clients to resize the keyboard vertically for optimal fit
+							one_time_keyboard: true/false requests clients to hide the keyboard as soon as it's been used
+							disable_web_page_preview: true/false disables link previews for links in this message
+							disable_notification: true/false send message silently
+   Return Value(s):  	If success return Message ID, else return false
+  =============================================================================== */
+function _CurlSendMsg($ChatID, $Text, $Param = array()){
+	global $API_URL;
+	$query = $API_URL . "/sendMessage";
+	$post_fields = array('chat_id' => $ChatID,'text' => $Text);
+	
+	if(array_key_exists('reply_markup',$Param)) $post_fields['reply_markup'] = $Param['reply_markup'];
+	if(array_key_exists('parse_mode',$Param)) $post_fields['parse_mode'] = $Param['parse_mode'];
+	if(array_key_exists('resize_keyboard',$Param)) $post_fields['resize_keyboard'] = $Param['resize_keyboard'];
+	if(array_key_exists('disable_notification',$Param)) $post_fields['disable_notification'] = $Param['disable_notification'];
+	if(array_key_exists('one_time_keyboard',$Param)) $post_fields['one_time_keyboard'] = $Param['one_time_keyboard'];
+	if(array_key_exists('disable_web_page_preview',$Param)) $post_fields['disable_web_page_preview'] = $Param['disable_web_page_preview'];
+	
+	$hCurl = curl_init(); 
+	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
+	curl_setopt($hCurl, CURLOPT_URL, $query); 
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
+	$output = curl_exec($hCurl);
+	$output = json_decode($output);
+	if(!($output->ok == 1))
+		return false;
+	else
+		return $output->result->message_id;
+}
 /* ===============================================================================
    Function Name..:		_ForwardMsg()
    Description....:     Forward message from a chat to another
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$OriginalChatID: Unique identifier for the chat where the original message was sent
 						$MsgID: Message identifier in the chat specified in from_chat_id
-   Return Value(s):  	Return True (to debug, uncomment 'return $response')
+   Return Value(s):  	If success return true, else false
   =============================================================================== */
 function _ForwardMsg($ChatID, $OriginalChatID, $MsgID){
 	global $API_URL;
 	$query = $API_URL . "/forwardMessage?chat_id=" . $ChatID . "&from_chat_id=" . $OriginalChatID . "&message_id=" . $MsgID;
 	$response = file_get_contents($query);
-	return true;
+	$response = json_decode($response);
+	if($response->ok == 1)
+		return true;
+	else
+		return false;
 }
 
 /* ===============================================================================
@@ -127,19 +151,31 @@ function _ForwardMsg($ChatID, $OriginalChatID, $MsgID){
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Path: Path to local file
 						$Caption: Caption to send with photo (optional)
-   Return Value(s):  	Return File ID of the photo as string
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
   =============================================================================== */
-function _SendPhoto($ChatID,$Path,$Caption = '',$DisableNotification = false){
+function _SendPhoto($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
 	global $API_URL;
 	$query = $API_URL . "/sendPhoto";
-	$post_fields = array('chat_id' => $ChatID,'photo' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
+	$post_fields = array('chat_id' => $ChatID,'photo' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
 	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
 	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
 	$output = curl_exec($hCurl);
-	return _GetFileID($output,'photo');
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'photo');
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
 }
 
 /* ===============================================================================
@@ -148,19 +184,31 @@ function _SendPhoto($ChatID,$Path,$Caption = '',$DisableNotification = false){
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Path: Path to local file
 						$Caption: Caption to send with audio (optional)
-   Return Value(s):  	Return File ID of the audio as string
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
   =============================================================================== */
-function _SendAudio($ChatID,$Path,$Caption = '',$DisableNotification = false){
+function _SendAudio($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
 	global $API_URL;
 	$query = $API_URL . "/sendAudio";
-	$post_fields = array('chat_id' => $ChatID,'audio' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
+	$post_fields = array('chat_id' => $ChatID,'audio' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
 	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
 	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
 	$output = curl_exec($hCurl);
-	return _GetFileID($output,'audio');	
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'audio');	
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
 }
 
 /* ===============================================================================
@@ -169,19 +217,31 @@ function _SendAudio($ChatID,$Path,$Caption = '',$DisableNotification = false){
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Path: Path to local file
 						$Caption: Caption to send with video (optional)
-   Return Value(s):  	Return File ID of the video as string
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
   =============================================================================== */
-function _SendVideo($ChatID,$Path,$Caption = '',$DisableNotification = false){
+function _SendVideo($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
 	global $API_URL;
 	$query = $API_URL . "/sendVideo";
-	$post_fields = array('chat_id' => $ChatID,'video' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
+	$post_fields = array('chat_id' => $ChatID,'video' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
 	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
 	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
 	$output = curl_exec($hCurl);
-	return _GetFileID($output,'video');
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'video');	
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
 }
 
 /* ===============================================================================
@@ -190,19 +250,31 @@ function _SendVideo($ChatID,$Path,$Caption = '',$DisableNotification = false){
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Path: Path to local file
 						$Caption: Caption to send with document (optional)
-   Return Value(s):  	Return File ID of the video as string
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
   =============================================================================== */
-function _SendDocument($ChatID,$Path,$Caption = '',$DisableNotification = false){
+function _SendDocument($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
 	global $API_URL;
 	$query = $API_URL . "/sendDocument";
-	$post_fields = array('chat_id' => $ChatID,'document' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
+	$post_fields = array('chat_id' => $ChatID,'document' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
 	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
 	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
 	$output = curl_exec($hCurl);
-	return _GetFileID($output,'document');
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'document');	
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
 }
 
 /* ===============================================================================
@@ -211,19 +283,31 @@ function _SendDocument($ChatID,$Path,$Caption = '',$DisableNotification = false)
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Path: Path to local file (format: .ogg)
 						$Caption: Caption to send with voice (optional)
-   Return Value(s):  	Return File ID of the video as string
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
   =============================================================================== */
-function _SendVoice($ChatID,$Path,$Caption = '',$DisableNotification = false){
+function _SendVoice($ChatID,$Path,$Caption = '',$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
 	global $API_URL;
 	$query = $API_URL . "/sendVoice";
-	$post_fields = array('chat_id' => $ChatID,'voice' => new CURLFile(realpath($Path)),'caption' => $Caption,'disable_notification' => $DisableNotification);
+	$post_fields = array('chat_id' => $ChatID,'voice' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
 	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
 	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
 	$output = curl_exec($hCurl);
-	return _GetFileID($output,'voice');
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'voice');	
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
 }
 
 /* ===============================================================================
@@ -231,33 +315,50 @@ function _SendVoice($ChatID,$Path,$Caption = '',$DisableNotification = false){
    Description....:     Send a sticker
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Path: Path to local file (format: .webp)
-   Return Value(s):  	Return File ID of the video as string
+						$DisableNotification: True to send silently message
+						$ReplyMarkup: Send custom keyboard markup (See documentation)
+						$ReplyTo: If it's a reply, this must be the message id of the original message
+   Return Value(s):  	If success return the File ID, else false
   =============================================================================== */
-function _SendSticker($ChatID,$Path,$DisableNotification = false){
+function _SendSticker($ChatID,$Path,$DisableNotification = false,$ReplyMarkup = '',$ReplyTo = ''){
 	global $API_URL;
 	$query = $API_URL . "/sendSticker";
-	$post_fields = array('chat_id' => $ChatID,'sticker' => new CURLFile(realpath($Path)),'disable_notification' => $DisableNotification);
+	$post_fields = array('chat_id' => $ChatID,'sticker' => new CURLFile(realpath($Path)));
+	if($Caption != '') $post_fields['caption'] = $Caption;
+	if($DisableNotification == true) $post_fields['disable_notification'] = true;
+	if($ReplyMarkup != '') $post_fields['reply_markup'] = $ReplyMarkup;
+	if($ReplyTo != '') $post_fields['reply_to_message_id'] = $ReplyTo;
 	$hCurl = curl_init(); 
 	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
 	curl_setopt($hCurl, CURLOPT_URL, $query); 
 	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
 	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
 	$output = curl_exec($hCurl);
-	return _GetFileID($output,'sticker');
+	$response = json_decode($output);
+	if($response != '' and $response->ok == 1)
+		return _GetFileID($output,'sticker');	
+	else
+		// return "Failed to send {$Path} to {$ChatID}";
+		return false;
 }
 
 /* ===============================================================================
    Function Name..:		_SendChatAction()
    Description....:     Display 'chat action' on specific chat (like Typing...)
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
-						$Action: Type of the action, can be: 'typing','upload_photo','upload_video','upload_audio',upload_document','find_location'
-   Return Value(s):  	Return True (to debug uncomment 'Return $Response')
+						$Action: Type of the action, can be: 
+						'typing', 'upload_photo', 'upload_video', 'upload_audio', 'upload_document', 'find_location'
+   Return Value(s):  	If success return true, else false
   =============================================================================== */
 function _SendChatAction($ChatID,$Action){
 	global $API_URL;
 	$query = $API_URL . "/sendChatAction?chat_id=" . $ChatID . "&action=" . $Action;
 	$response = file_get_contents($query);
-	return true;
+	$response = json_decode($response);
+	if($response->ok == 1)
+		return true;
+	else
+		return false;
 }
 
 /* ===============================================================================
@@ -266,14 +367,18 @@ function _SendChatAction($ChatID,$Action){
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Latitude: Latitute of location
 						$Longitude: Longitude of location
-   Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
+   Return Value(s):  	If success return true, else false
   =============================================================================== */
 function _SendLocation($ChatID,$Latitude,$Longitude,$DisableNotification = false){
 	global $API_URL;
 	$query = $API_URL . "/sendLocation?chat_id=" . $ChatID . "&latitude=" . $Latitude . "&longitude=" . $Longitude;
 	if($DisableNotification == true){$query &= "&disable_notification=True";}
 	$response = file_get_contents($query);
-	return true;
+	$response = json_decode($response);
+	if($response->ok == 1)
+		return true;
+	else
+		return false;
 }
 
 /* ===============================================================================
@@ -282,14 +387,18 @@ function _SendLocation($ChatID,$Latitude,$Longitude,$DisableNotification = false
    Parameter(s)...:     $ChatID: Unique identifier for the target chat
 						$Phone: Phone number of the contact
 						$Name: Name of the contact
-   Return Value(s):  	Return True (to debug, uncomment 'Return $Response')
+   Return Value(s):  	If success return true, else false
   =============================================================================== */
 function _SendContact($ChatID,$Phone,$Name,$DisableNotification = false){
 	global $API_URL;
 	$query = $API_URL . "/sendContact?chat_id=" . $ChatID . "&phone_number=" . $Phone . "&first_name=" . $Name;
 	if($DisableNotification == true){$query &= "&disable_notification=True";}
 	$response = file_get_contents($query);
-	return true;
+	$response = json_decode($response);
+	if($response->ok == 1)
+		return true;
+	else
+		return false;
 }
 
 /* ===============================================================================
@@ -396,7 +505,7 @@ function _LeaveChat($ChatID){
 	$query = $API_URL . "/leaveChat?chat_id=" . $ChatID;
 	$json = file_get_contents($query);
 	$response = json_decode($json);
-	if($response->result == 1){
+	if($response->ok == 1){
 		return true;
 	}else{
 		return false;
@@ -415,7 +524,7 @@ function _KickChatMember($ChatID,$UserID){
 	$query = $API_URL . "/kickChatMember?chat_id=" . $ChatID . "&user_id=" . $UserID;;
 	$json = file_get_contents($query);
 	$response = json_decode($json);
-	if($response->result == 1){
+	if($response->ok == 1){
 		return true;
 	}else{
 		return false;
@@ -434,7 +543,7 @@ function _UnbanChatMember($ChatID,$UserID){
 	$query = $API_URL . "/unbanChatMember?chat_id=" . $ChatID . "&user_id=" . $UserID;;
 	$json = file_get_contents($query);
 	$response = json_decode($json);
-	if($response->result == 1){
+	if($response->ok == 1){
 		return true;
 	}else{
 		return false;
@@ -442,21 +551,127 @@ function _UnbanChatMember($ChatID,$UserID){
 }
 
 /* ===============================================================================
-   Function Name..:		_SendInlineQuery()
-   Description....:     POC of inline query answer, not work yes
+   Function Name..:		_AnswerInlineQuery()
+   Description....:     Answer to an inline query
    Parameter(s)...:     $QueryID: Unique identifier for the current query
-   						$Response: Array of answer to send
-   Return Value(s):  	Return true if success, false otherwise
+   						$Response: Array of answer to send (see documentation)
+						$CacheTime: Time, in seconds, to cache the results (default 300)
+   Return Value(s):  	Return true
   =============================================================================== */
-// function _SendInlineQuery($queryid,$response){
-	// global $API_URL;
-	// $query = $API_URL . "/answerInlineQuery?inline_query_id=" . $queryid . "&results=" . json_encode($response);
-	// $hCurl = curl_init(); 
-	// curl_setopt($hCurl, CURLOPT_URL, $query); 
-	// curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
-	// $output = curl_exec($hCurl);
-// }
-  
+function _AnswerInlineQuery($QueryID,$Results,$CacheTime = '300'){
+	global $API_URL;
+	$query = $API_URL . "/answerInlineQuery";
+	$post_fields = array('inline_query_id' => $QueryID,'results' => $Results,'cache_time' => $CacheTime); 
+	$hCurl = curl_init(); 
+	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
+	curl_setopt($hCurl, CURLOPT_URL, $query); 
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
+	$output = curl_exec($hCurl);
+	print($output);
+}
+/* ===============================================================================
+   Function Name..:		_AnswerCallbackQuery()
+   Description....:     Answer to an inline query
+   Parameter(s)...:     $QueryID: Unique identifier for the current query
+   						$Response: Array of answer to send (see documentation)
+						$CacheTime: Time, in seconds, to cache the results (default 300)
+   Return Value(s):  	Return true
+  =============================================================================== */
+function _AnswerCallbackQuery($CallbackID,$Text){
+	global $API_URL;
+	$query = $API_URL . "/answerCallbackQuery";
+	$post_fields = array('callback_query_id' => $CallbackID,'text' => $Text); 
+	$hCurl = curl_init(); 
+	curl_setopt($hCurl, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
+	curl_setopt($hCurl, CURLOPT_URL, $query); 
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields); 
+	curl_exec($hCurl);
+	return true;
+}
+
+// EXAMPLE OF INLINE KEYBOARD BUTTON
+// $postButton = array("inline_keyboard" => array(array(array("text" => "👥 {$linecount}", "callback_data" => "c-{$postCode}"), array("text" => "Partecipar", "callback_data" => "p-{$postCode}")), array(array("text" => "Compartir", "url" => "https://t.me/{$botUsername}?start={$postCode}"))));
+// $postButton = json_encode($postButton, true);
+
+/* ===============================================================================
+   Function Name..:		_EditMessageText()
+   Description....:     Edit text of a message
+   Parameter(s)...:     $ChatID: Unique identifier for the current chat
+   						$MessageID: Unique identifier for the message to edit
+						$Text: New text to send
+   Return Value(s):  	Return true if success, else false
+  =============================================================================== */
+function _EditMessageText($ChatID,$MessageID,$Text){
+	global $API_URL;
+	$URL = $API_URL . "/editMessageText";
+	$post_fields = array('chat_id' => $ChatID, 'message_id' => $MessageID, 'text' => $Text);
+	$hCurl = curl_init();
+	curl_setopt($hCurl, CURLOPT_URL, $URL);
+	curl_setopt($hCurl, CURLOPT_POST, 1);
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields);
+	$output = curl_exec($hCurl);
+	$response = json_decode($output);
+	if($response->ok == 1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* ===============================================================================
+   Function Name..:		_EditMessageCaption()
+   Description....:     Answer to an inline query
+   Parameter(s)...:     $QueryID: Unique identifier for the current query
+   						$Response: Array of answer to send (see documentation)
+						$CacheTime: Time, in seconds, to cache the results (default 300)
+   Return Value(s):  	Return true
+  =============================================================================== */
+function _EditMessageCaption($ChatID,$MessageID,$Caption){
+	global $API_URL;
+	$URL = $API_URL . "/editMessageCaption";
+	$post_fields = array('chat_id' => $ChatID, 'message_id' => $MessageID, 'caption' => $Caption);
+	$hCurl = curl_init();
+	curl_setopt($hCurl, CURLOPT_URL, $URL);
+	curl_setopt($hCurl, CURLOPT_POST, 1);
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields);
+	$output = curl_exec($hCurl);
+	$response = json_decode($output);
+	if($response->ok == 1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* ===============================================================================
+   Function Name..:		_EditMessageReplyMarkup()
+   Description....:     Edit the keyboard of a message
+   Parameter(s)...:     $QueryID: Unique identifier for the current query
+   						$Response: Array of answer to send (see documentation)
+						$CacheTime: Time, in seconds, to cache the results (default 300)
+   Return Value(s):  	Return true
+  =============================================================================== */
+function _EditMessageReplyMarkup($ChatID,$MessageID,$Markup){
+	global $API_URL;
+	$URL = $API_URL . "/editMessageReplyMarkup";
+	$post_fields = array('chat_id' => $ChatID, 'message_id' => $MessageID, 'reply_markup' => $Markup);
+	$hCurl = curl_init();
+	curl_setopt($hCurl, CURLOPT_URL, $URL);
+	curl_setopt($hCurl, CURLOPT_POST, 1);
+	curl_setopt($hCurl, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($hCurl, CURLOPT_POSTFIELDS, $post_fields);
+	$output = curl_exec($hCurl);
+	$response = json_decode($output);
+	if($response->ok == 1){
+		return true;
+	}else{
+		return false;
+	}
+}
 
 /* ===============================================================================
    Function Name..:		_GetFilePath()
@@ -511,7 +726,7 @@ function _DownloadFile($FilePath){
   =============================================================================== */
 function _JSONDecode($newUpdates){
 	$update = json_decode($newUpdates, true);
-	//print_r($update);
+	print_r($update);
 	if(isset($update['result']['0']['channel_post'])){ //Incoming post from channel where bot is admin
 		$offset = $update['result']['0']['update_id'];
 		
@@ -631,76 +846,96 @@ function _JSONDecode($newUpdates){
 			$msgData['text'] = $text;
 		}
 		return $msgData;
-	}elseif($update['result']['0']['message']['chat']['type'] == 'private'){//Incoming message from a private chat
+	}elseif($update['result']['0']['message']['chat']['type'] == 'private'){
+		//Incoming message from a private chat
 		$message = $update['result']['0'];
-		$update_id = $message['update_id'];
 		$data = $message['message'];
-			$message_id = $data['message_id'];
-			$from = $data['from'];
-				$chat_id = $from['id'];
-				$first_name = $from['first_name'];
-				$username = $from['username'];
-			if(array_key_exists('text',$data))
-				$text = $data['text'];
-			if(array_key_exists('reply_to_message',$data)){
-				$reply = $data['reply_to_message'];
-					$originalMsgID     = $data['reply_to_message']['message_id'];
-					$originalUserID    = $data['reply_to_message']['from']['id'];
-					$originalFirstName = $data['reply_to_message']['from']['first_name'];
-					$originalUsername  = $data['reply_to_message']['from']['username'];
-					$originalChatID    = $data['reply_to_message']['chat']['id'];
-					$originalChatTitle = $data['reply_to_message']['from']['title'];
-					$originalMsgText   = $data['reply_to_message']['text'];
-			}
-			if(isset($data['forward_from'])){
-				$forwardID		  = $data['forward_from']['id'];
-				$forwardFirstName = $data['forward_from']['first_name'];
-				$forwardUsername  = $data['forward_from']['username'];
-			}
-			if(array_key_exists('photo',$data)){
-				$counter  = count($data['photo']) - 1;
-				$photo_id = $data['photo'][$counter]['file_id'];
-			}
-			if(array_key_exists('caption',$data))
-				$caption = $data['caption'];
-			
+
 		$msgData = array(
 			"type"       => "private",
-			"offset"     => $update_id,
-			"message_id" => $message_id,
-			"chat_id"    => $chat_id,
-			"first_name" => $first_name,
-			"username"   => $username,
+			"offset"     => $message['update_id'],
+			"message_id" => $data['message_id'],
+			"chat_id"    => $data['from']['id'],
+			"username"   => $data['from']['username'],
+			"first_name" => $data['from']['first_name'],
 		);
 		
-		if(isset($text))
-			$msgData['text'] = $text;
-		
-		if(isset($originalMsgID)){
-			$msgData['reply'] = 'yes';
-			$msgData['original_message_id'] = $originalMsgID;
-			$msgData['original_user_id']    = $originalUserID;
-			$msgData['original_first_name'] = $originalFirstName;
-			$msgData['original_username']   = $originalUsername;
-			$msgData['original_chat_id']    = $originalChatID;
-			$msgData['original_chat_title'] = $originalChatTitle;
-			$msgData['original_text']       = $originalMsgText;
+		if(array_key_exists('text',$data))
+			$msgData['text'] = $data['text'];
+			
+		if(array_key_exists('photo',$data)){
+			$counter = count($data['photo']) - 1;
+			$photo   = $data['photo'][$counter];
+			$msgData['photo_id']     = $photo['file_id'];
+			$msgData['photo_size']   = $photo['file_size']; 
+			$msgData['photo_width']  = $photo['width'];
+			$msgData['photo_height'] = $photo['height'];
 		}
 		
-		if(isset($forwardFromID)){
+		if(array_key_exists('video',$data)){
+			$video = $data['video'];
+			$msgData['video_id'] 		   = $video['file_id'];
+			$msgData['video_size'] 		   = $video['file_size'];
+			$msgData['video_duration'] 	   = $video['duration'];
+			$msgData['video_width'] 	   = $video['width'];
+			$msgData['video_height'] 	   = $video['height'];
+			$msgData['video_thumb_id'] 	   = $video['thumb']['file_id'];
+			$msgData['video_thumb_size']   = $video['thumb']['file_size'];
+			$msgData['video_thumb_width']  = $video['thumb']['width'];
+			$msgData['video_thumb_height'] = $video['thumb']['height'];
+		}
+		
+		if(array_key_exists('audio',$data)){
+			$audio = $data['audio'];
+			$msgData['audio_id'] 		= $audio['file_id'];
+			$msgData['audio_name']		= $audio['title'];
+			$msgData['audio_performer'] = $audio['performer'];
+			$msgData['audio_size'] 		= $audio['file_size'];
+			$msgData['audio_duration'] 	= $audio['duration'];
+			$msgData['audio_mime'] 		= $audio['mime_type'];
+		}
+		
+		if(array_key_exists('document',$data)){
+			$document = $data['document'];
+			$msgData['document_id']   = $document['file_id'];
+			$msgData['document_size'] = $document['file_size'];
+			$msgData['document_name'] = $document['file_name'];
+			$msgData['document_mime'] = $document['mime_type'];
+		}
+		
+		if(array_key_exists('voice',$data)){
+			$voice = $data['voice'];
+			$msgData['voice_id'] 	   = $voice['file_id'];
+			$msgData['voice_size'] 	   = $voice['file_size'];
+			$msgData['voice_mime']     = $voice['mime_type'];
+			$msgData['voice_duration'] = $voice['duration'];
+		}
+		
+		if(array_key_exists('caption',$data))
+			$msgData['caption'] = $data['caption'];
+			
+		if(array_key_exists('reply_to_message',$data)){
+			$reply = $data['reply_to_message'];
+			$msgData['reply'] 		  = 'yes';
+			$msgData['from_chat_id']  = $reply['from']['id'];
+			$msgData['from_username'] = $reply['from']['username'];
+			$msgData['from_first_name'] = $reply['from']['first_name'];
+			$msgData['original_chat_id'] 	  = $reply['chat']['id'];
+			$msgData['original_username'] 	  = $reply['chat']['username'];
+			$msgData['original_first_name']    = $reply['chat']['first_name'];
+			$msgData['original_message_id']	= $reply['message_id'];
+			$msgData['original_text'] = $reply['text'];
+		}
+			
+		if(array_key_exists('forward_from',$data)){
 			$msgData['forward'] = 'yes';
-			$msgData['forward_id'] = $forwardID;
-			$msgData['forward_first_name'] = $forwardFirstName;
-			$msgData['forward_username'] = $forwardUsername;
+			$msgData['forward_id'] = $data['forward_from']['id'];
+			$msgData['forward_first_name'] = $data['forward_from']['first_name'];
+			$msgData['forward_username'] = $data['forward_from']['username'];
+			$msgData['forward_text'] = $data['text'];
 		}
-		
-		if(isset($photo_id)){
-			$msgData['photo_id'] = $photo_id;
-		}		
-		if(isset($caption))
-			$msgData['caption'] = $caption;
 		
 		return $msgData;
-	}
+	}	
 }
 ?>
